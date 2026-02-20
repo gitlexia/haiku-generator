@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Haiku Generator</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Arial; max-width: 720px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 18px; }
+    textarea { width: 100%; min-height: 90px; padding: 10px; border-radius: 10px; border: 1px solid #ccc; font-size: 16px; }
+    button { padding: 10px 14px; border: 0; border-radius: 10px; font-size: 16px; cursor: pointer; }
+    pre { white-space: pre-wrap; font-size: 18px; line-height: 1.5; margin-top: 14px; }
+    .row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .muted { color: #666; font-size: 14px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Welcome to Alexia's Haiku Generator.</h2>
+    <p>This is a work in progress. Type something and see what happens, or type 'quit' to exit.</p>
+
+    <textarea id="prompt" placeholder="Type something..."></textarea>
+
+    <div class="row">
+      <button id="go">Generate haiku</button>
+      <button id="clear">Clear</button>
+    </div>
+
+    <div class="muted" id="status"></div>
+    <pre id="out"></pre>
+  </div>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000/generate";
+
+    async function generateHaiku() {
+      const promptBox = document.getElementById("prompt");
+      const out = document.getElementById("out");
+      const status = document.getElementById("status");
+      const prompt = promptBox.value.trim();
+
+      if (!prompt) return;
+
+      if (prompt.toLowerCase() === "quit") {
+        out.textContent = "Bye!";
+        return;
+      }
+
+      status.textContent = "Generating...";
+      out.textContent = "";
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({prompt})
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Request failed");
+
+        out.textContent = data.haiku;
+        status.textContent = "";
+      } catch (err) {
+        status.textContent = "Error: " + err.message;
+      }
+    }
+
+    document.getElementById("go").addEventListener("click", generateHaiku);
+    document.getElementById("clear").addEventListener("click", () => {
+      document.getElementById("prompt").value = "";
+      document.getElementById("out").textContent = "";
+      document.getElementById("status").textContent = "";
+    });
+  </script>
+</body>
+</html>
